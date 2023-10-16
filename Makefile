@@ -1,4 +1,4 @@
-NAME = program
+NAME = TP1
 CC = g++ -std=c++20 
 SRC_DIR = ./src
 INC_DIR = ./include
@@ -9,10 +9,11 @@ EXE = $(BIN_DIR)/$(NAME)
 
 OBJS = \
 	$(OBJ_DIR)/Puzzle.o \
-	$(OBJ_DIR)/BSI.o \
-	$(OBJ_DIR)/BCI.o \
-	$(OBJ_DIR)/Hashtable.o \
 	$(OBJ_DIR)/Utils.o \
+	$(OBJ_DIR)/UninformedSearch.o \
+	$(OBJ_DIR)/InformedSearch.o \
+	$(OBJ_DIR)/LocalSearch.o \
+	$(OBJ_DIR)/Hashtable.o \
 	$(OBJ_DIR)/main.o
 
 all: $(EXE)

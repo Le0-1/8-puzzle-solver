@@ -1,7 +1,7 @@
 #include "Hashtable.hpp"
 
 Hashtable::Hashtable() { 
-    for (int i = 0; i < TABLE_SIZE; i++) {
+    for (unsigned i = 0; i < TABLE_SIZE; i++) {
         std::list<Puzzle*> list;
         this->m_Table.push_back(list);
     }
@@ -9,11 +9,11 @@ Hashtable::Hashtable() {
 
 std::size_t Hashtable::Hash(Puzzle* node) {
     std::size_t index = node->m_CurrentState[0];
-
-    // Iterate through the state of the puzzle and calculate the hash.
     for (int i = 0; i < PUZZLE_SIZE; ++i) {
         index = index * HASH_NUMBER + node->m_CurrentState[i];
     }
+
+    //Garante que o índice existe na tabela
     return index % TABLE_SIZE;
 }
 

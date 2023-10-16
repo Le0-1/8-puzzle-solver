@@ -13,6 +13,7 @@ const int ZERO = 0;
 //Down: Aumenta 3 no vetor
 //Left: Diminui 1 no vetor
 //Right: Aumenta 1 no vetor
+//None: passado para raiz
 enum Moves {
     NONE = 0,
     UP = -3,
@@ -23,9 +24,7 @@ enum Moves {
 
 //Classe para representar o estado do 8-puzzle.
 class Puzzle {
-    public:
-        //---------------- Membros Privados ----------------------//
-
+    private:
         //Pai do nó
         Puzzle* m_Parent;
 
@@ -76,14 +75,10 @@ class Puzzle {
          * @param last_move Último movimento executado para chegar ao estado atual. A raiz tem como último movimento o NONE, que é representado pelo zero.
         */
         Puzzle(const int values[], const Moves& last_move);
-        Puzzle(const std::vector<int>& values, const Moves& last_move);
+        Puzzle(const std::vector<int>& values, const Moves& last_move); 
 
         /**
-         * @brief Destrutor da classe que usa a função auxiliar ClearRecursive
-         * para apagar todos os nós. Quando percorro os filhos e chamo o delete,
-         * ele vai chamar o destrutor novamente para os filhos desses filhos e indo
-         * até não ter mais filhos. É chamada de destruição recursiva.
-         * 
+         * @brief Destrutor da classe que faz a destruição recusiva do grafo.
         */
         ~Puzzle();
 
@@ -97,16 +92,14 @@ class Puzzle {
         //Printa o estado do nó
         void PrintState();
 
-        /*Função que vai ser usada para comparar se um estado é igual ao outro.
-        Ela vai ser usada na classe BSI (Busca sem Informação) para verificar se um
-        estado já se encontra na lista aberta*/
+        /*Função que vai ser usada para comparar se um estado é igual ao outro.*/
         bool isSameState(Puzzle* node);
 
         /*Função que retorna a profundidade que o nó se encontra na árvore.
         Vou usar essa função no algoritmo IDS, no de Dijkstra e no A* */
         int Depth();
 
-        /*Calcula a primeira heurística. Ela será o custo de Manhattan, ou seja, 
+        /*Calcula a primeira heurística para o A estrela. Ela será o custo de Manhattan, ou seja, 
         a soma total de quantos movimentos cada elemento tem que fazer para atingir
         a posição correta*/
         int CalculateManhattanCost();
@@ -116,8 +109,11 @@ class Puzzle {
         int CalculateMisplacedTiles();
 
         //Permissão para os algoritmos de busca  acessar os membros privados
-        friend class BSI;
-        friend class BCI;
+        friend class UninformedSearch;
+        friend class LocalSearch;
+        friend class InformedSearch;
+        friend class Utils;
+        friend class Hashtable;
 };
 
 #endif // !PUZZLE_H

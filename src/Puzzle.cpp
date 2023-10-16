@@ -3,7 +3,7 @@
 Puzzle::Puzzle(const int values[], const Moves& last_move) {
     this->m_Parent = nullptr;
     this->m_LastMove = last_move;
-    this->m_Cost = 0; //Vou usar essa variável apenas nos algoritmos que envolvem custo
+    this->m_Cost = 0; 
     for (int i = 0; i < PUZZLE_SIZE; i++) {
         if (values[i] == ZERO) this->m_ZeroIndex = i; //Pega o index do ZERO
         this->m_CurrentState[i] = values[i];
@@ -13,7 +13,7 @@ Puzzle::Puzzle(const int values[], const Moves& last_move) {
 Puzzle::Puzzle(const std::vector<int>& values, const Moves& last_move) {
     this->m_Parent = nullptr;
     this->m_LastMove = last_move;
-    this->m_Cost = 0; //Vou usar essa variável apenas nos algoritmos que envolvem custo
+    this->m_Cost = 0; 
     for (int i = 0; i < PUZZLE_SIZE; i++) {
         if (values[i] == ZERO) this->m_ZeroIndex = i; //Pega o index do ZERO
         this->m_CurrentState[i] = values[i];

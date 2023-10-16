@@ -1,6 +1,6 @@
-#include "BCI.hpp"
+#include "InformedSearch.hpp"
 
-void BCI::AStar(Puzzle* root) {
+void InformedSearch::AStar(Puzzle* root, const bool& print) {
     /*Comparador personalizado para a fila de prioridade mínima*/
     auto queue_cmp = [](Puzzle* a, Puzzle* b) {
         return a->m_Cost > b->m_Cost;
@@ -23,16 +23,17 @@ void BCI::AStar(Puzzle* root) {
     generated_nodes.Insert(root);
 
     while (!open_list.empty()) {
-        current_node = open_list.top(); //Pega o primeiro da fila
-        open_list.pop();            //Retira o primeiro da fila
+        //Pega o primeiro da fila e o retira
+        current_node = open_list.top(); 
+        open_list.pop();           
 
         //Checa se é o objetivo
         if (current_node->isGoal()) {
-            BSI::TraceSolution(current_node);
+            Utils::TraceSolution(current_node, print);
             return;
         }
 
-        //Expande o nó
+        //Expande o nó e o adiciona na lista de nós expandidos
         current_node->ExpandNode();
         closed_list.Insert(current_node);
 
@@ -46,6 +47,7 @@ void BCI::AStar(Puzzle* root) {
                 Se não estiver, adiciona*/
                 Puzzle* ptr = generated_nodes.Find(current_child);
                 if (ptr == nullptr) {
+                    //F(n) = depth + distância da manhattan
                     current_child->m_Cost = current_child->CalculateManhattanCost() + current_child->Depth();
                     open_list.push(current_child);
                     generated_nodes.Insert(current_child);
@@ -60,7 +62,7 @@ void BCI::AStar(Puzzle* root) {
     }
 }
 
-void BCI::GreedySearch(Puzzle* root) {
+void InformedSearch::GreedySearch(Puzzle* root, const bool& print) {
     
     std::list<Puzzle*> open_list, closed_list;
 
@@ -77,7 +79,7 @@ void BCI::GreedySearch(Puzzle* root) {
         open_list.pop_front();
 
         if (current_node->isGoal()) {
-            BSI::TraceSolution(current_node);
+            Utils::TraceSolution(current_node, print);
             return;
         }
 
@@ -87,90 +89,24 @@ void BCI::GreedySearch(Puzzle* root) {
         for (unsigned i = 0; i < current_node->m_Childrens.size(); i++) {
             current_child = current_node->m_Childrens[i];
             if (current_child->isGoal()) {
-                BSI::TraceSolution(current_child);
+                Utils::TraceSolution(current_child, print);
                 return;
             }
 
             //Verifica se está na lista fechada.
-            if (BSI::FindNodeInList(closed_list, current_child) == nullptr) {
+            if (Utils::FindNodeInList(closed_list, current_child) == nullptr) {
 
                 //Não está na lista aberta, então adiciona nela.
-                if (BSI::FindNodeInList(open_list, current_child) == nullptr) {
+                if (Utils::FindNodeInList(open_list, current_child) == nullptr) {
                     current_child->m_Cost = current_child->CalculateMisplacedTiles();
                     open_list.push_back(current_child);
                 }
             }
 
         }
-        //Ordena a lista
+        //Ordena a lista para simular a fila de prioridade
         open_list.sort([](const Puzzle* a, const Puzzle* b) {
             return a->m_Cost < b->m_Cost;
         });
     }
-}
-
-
-void BCI::HillClimbing(Puzzle* root) {
-    //Inicializa o vetor para guardar o caminho da solução
-    std::vector<Puzzle*> path;
-    path.push_back(root);
-
-    //Assinala o nó atual como a raiz
-    Puzzle* current = root;
-    int counter = 0;
-
-    //Calcula o custo da raiz
-    current->m_Cost = current->CalculateManhattanCost();
-
-    while (HILL_CLIMBING_LIMIT > counter) {
-        current->ExpandNode();
-
-        Puzzle* best_child = nullptr;
-        int min_cost = current->m_Cost;
-
-        //Calcula os custos para cada filho e já tenta achar o melhor entre eles
-        for (Puzzle* child : current->m_Childrens) {
-            if (child->isGoal()) {
-                path.push_back(child);
-                for (int i = 0; i < path.size(); i++) {
-                    path[i]->PrintState();
-                }
-                std::cout << path.size() - 1 << '\n';
-                return;
-            }
-            child->m_Cost = child->CalculateManhattanCost();
-
-            //Esse if serve para procurar por um filho com um valor estritamente menor ou igual
-            if (child->m_Cost <= min_cost) {
-                best_child = child;
-                min_cost = child->m_Cost;
-            }
-        }
-        //Se não existe nenhum filho com um valor estritamente menor, procura por um outro
-        //Com no máximo o custo + 1. São os movimentos laterais
-        if (best_child == nullptr) {
-            //Agora o custo mínimo aceita o ERRO
-            min_cost = min_cost + ERRO;
-            for (Puzzle* child : current->m_Childrens) {
-                if (child->m_Cost <= min_cost) {
-                    best_child = child;
-                    min_cost = child->m_Cost;
-                }
-            }
-        }
-
-        // Se nenhum melhor filho for encontrado pare.
-        if (best_child == nullptr) break;
-
-        // Se o melhor filho tem o mesmo custo ou maior, adiciona como movimento lateral
-        if (best_child->m_Cost >= current->m_Cost) counter++;
-
-        //Currente agora é o melhor filho.
-        current = best_child;
-        path.push_back(current);
-    }
-    for (int i = 0; i < path.size(); i++) {
-        path[i]->PrintState();
-    }
-    std::cout << path.size() - 1 << '\n';
 }
