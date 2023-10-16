@@ -12,6 +12,7 @@ int main(int argc, const char** argv) {
         std::string algorithm = argv[1];
         bool print = 0; 
 
+        //Pega o estado inicial
         std::vector<int> initial_state;
         for (int i = 2; i < 11; i++) {
             int valor = std::stoi(argv[i]);
