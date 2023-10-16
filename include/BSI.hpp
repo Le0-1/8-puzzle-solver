@@ -2,26 +2,20 @@
 #define BSI_H
 
 #include "Puzzle.hpp"
+#include "Hashtable.hpp"
 
 
 #include <vector>
 #include <iostream>
 #include <queue>
+#include <algorithm>
 #include <list>
 #include <set>
 
 const int LIMIT = 35;
 
-/*Comparador personalizado para o set que representa a lista fechada. Fiz
-isso pois vai me permitir procurar se um estado está presente no set mais rápido
-em O(log N)
-Referência: https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator*/
-auto closed_list_cmp = [](Puzzle* a, Puzzle* b) {
-    int i = 0;
-    while (a->m_CurrentState[i] == b->m_CurrentState[i]) i++;
-    return a->m_CurrentState[i] < b->m_CurrentState[i];
-};
 
+//Classe que irá conter os algoritmos de BUSCA SEM INFORMAÇÃO (BSI).
 class BSI {
     private:
         /*Função que implementa a busca em profundidade limitada.
@@ -30,10 +24,11 @@ class BSI {
 
         /**
          * @brief Verifica se um elemento já está presenta na lista aberta
-         * @param open_list Fronteira ou lista aberta a qual eu estou procurando o elemento
+         * @param open_list lista a qual eu estou procurando o elemento
          * @param node elemento que quero verificar se está na lista
+         * @return Ponteiro para o elemento ou nullptr se não encontrar
         */
-        static bool Contains(const std::list<Puzzle*>& open_list, Puzzle* node);
+        static Puzzle* FindNodeInList(const std::list<Puzzle*>& list, Puzzle* node);
 
         //Parte do último nó até a raiz para mostrar a solução
         /**
@@ -55,6 +50,8 @@ class BSI {
 
         //Executa o algoritmo de custo Uniforme ou o Dijkstra
         static void UniformCostSearch(Puzzle* root);
+
+        friend class BCI;
 
 };  
 

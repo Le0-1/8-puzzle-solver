@@ -1,5 +1,5 @@
 NAME = program
-CC = g++ -std=c++20 -O3
+CC = g++ -std=c++20 
 SRC_DIR = ./src
 INC_DIR = ./include
 BIN_DIR = ./bin
@@ -10,6 +10,9 @@ EXE = $(BIN_DIR)/$(NAME)
 OBJS = \
 	$(OBJ_DIR)/Puzzle.o \
 	$(OBJ_DIR)/BSI.o \
+	$(OBJ_DIR)/BCI.o \
+	$(OBJ_DIR)/Hashtable.o \
+	$(OBJ_DIR)/Utils.o \
 	$(OBJ_DIR)/main.o
 
 all: $(EXE)

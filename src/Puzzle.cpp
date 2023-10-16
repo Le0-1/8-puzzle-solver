@@ -3,7 +3,17 @@
 Puzzle::Puzzle(const int values[], const Moves& last_move) {
     this->m_Parent = nullptr;
     this->m_LastMove = last_move;
-    this->m_Cost = 0; //Vou usar essa variável apenas no algoritmo de Dijkstra
+    this->m_Cost = 0; //Vou usar essa variável apenas nos algoritmos que envolvem custo
+    for (int i = 0; i < PUZZLE_SIZE; i++) {
+        if (values[i] == ZERO) this->m_ZeroIndex = i; //Pega o index do ZERO
+        this->m_CurrentState[i] = values[i];
+    }
+}
+
+Puzzle::Puzzle(const std::vector<int>& values, const Moves& last_move) {
+    this->m_Parent = nullptr;
+    this->m_LastMove = last_move;
+    this->m_Cost = 0; //Vou usar essa variável apenas nos algoritmos que envolvem custo
     for (int i = 0; i < PUZZLE_SIZE; i++) {
         if (values[i] == ZERO) this->m_ZeroIndex = i; //Pega o index do ZERO
         this->m_CurrentState[i] = values[i];
@@ -51,7 +61,7 @@ bool Puzzle::isMovementValid(const Moves& movement) {
     return false;
 }
 
-void Puzzle::DoMovement(const Moves& movement) {
+Puzzle* Puzzle::DoMovement(const Moves& movement) {
     //Checa se o movimento é valido
     if (this->isMovementValid(movement)) {
         //Pega o index do zero atual para depois voltar ao estado original
@@ -63,12 +73,15 @@ void Puzzle::DoMovement(const Moves& movement) {
 
         //Cria o filho com base no novo estado do vetor e no movimento
         Puzzle* child = new Puzzle(this->m_CurrentState, movement);
-        child->m_Parent = this;
-        this->AddChild(child);
 
         //Retorna o ZERO à posição original para que o pai se mantenha correto.
         this->SwapZero(old_zero_pos); 
+
+        //Retorna filho recém criado
+        return child;
     }
+    //Se movimento é ilegal, retorna nulo
+    return nullptr;
 }
 
 void Puzzle::SwapZero(const int& pos) {
@@ -78,15 +91,17 @@ void Puzzle::SwapZero(const int& pos) {
 }
 
 void Puzzle::ExpandNode() {
-    //Aplica os movimentos legais
-    this->DoMovement(Moves::UP);
-    this->DoMovement(Moves::DOWN);
-    this->DoMovement(Moves::LEFT);
-    this->DoMovement(Moves::RIGHT);
+    this->AddChild(DoMovement(Moves::UP));
+    this->AddChild(DoMovement(Moves::DOWN));
+    this->AddChild(DoMovement(Moves::LEFT));
+    this->AddChild(DoMovement(Moves::RIGHT));
 }
 
 void Puzzle::AddChild(Puzzle* child) { 
-    this->m_Childrens.push_back(child);
+    if (child != nullptr) {
+        child->m_Parent = this;
+        this->m_Childrens.push_back(child);
+    }
 };
 
 bool Puzzle::isGoal() {
@@ -118,10 +133,36 @@ int Puzzle::Depth() {
     return i;
 }
 
+int Puzzle::CalculateManhattanCost() {
+    int distance = 0;
+    
+    for (int i = 0; i < PUZZLE_SIZE; i++) {
+        if (this->m_CurrentState[i] != 0) { //Pula o Zero
+            int row_goal = i / 3;
+            int col_goal = i % 3;
+            
+            int value = this->m_CurrentState[i];
+            int row_current = (value - 1) / 3;
+            int col_current = (value - 1) % 3;
+            
+            int row_distance = abs(row_goal - row_current);
+            int col_distance = abs(col_goal - col_current);
+            
+            distance += row_distance + col_distance;
+        }
+    }
+    
+    return distance;
+}
 
-int Puzzle::CalculateCost() {
-    int depth = this->Depth();
-    return ((depth*(depth + 1))/2);
+int Puzzle::CalculateMisplacedTiles() {
+    int misplaced_tiles = 0;
+    for (int i = 0; i < PUZZLE_SIZE; i++) {
+        if (this->m_CurrentState[i] != ZERO) {
+            if (this->m_CurrentState[i] != i + 1) misplaced_tiles++;
+        }
+    }
+    return misplaced_tiles;
 }
 
 bool Puzzle::isSameState(Puzzle* node) {

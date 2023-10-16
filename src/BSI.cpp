@@ -1,17 +1,17 @@
 #include "BSI.hpp"
 
-bool BSI::Contains(const std::list<Puzzle*>& open_list, Puzzle* node) {
-    for (auto it : open_list) {
-        if (it->isSameState(node)) return true;
+Puzzle* BSI::FindNodeInList(const std::list<Puzzle*>& list, Puzzle* node) {
+    for (Puzzle* it : list) {
+        if (it->isSameState(node)) return it;
     }
-    return false;
+    return nullptr;
 }
 
 void BSI::TraceSolution(Puzzle* node) {
     //Vector para mostrar a solução
     std::vector<Puzzle*> steps;
 
-    //Sai da solução e sobre o grafo até a raiz.
+    //Sai da solução e sobe o grafo até a raiz.
     while (node->m_Parent != nullptr) {
         steps.push_back(node);
         node = node->m_Parent;
@@ -22,35 +22,34 @@ void BSI::TraceSolution(Puzzle* node) {
 
     //Printa os elementos do vector na ordem contrária, como especificado no TP
     std::cout << steps.size() - 1 << '\n';
-    for (int i = steps.size() - 1; i >= 0; i--) {
-        steps[i]->PrintState();
-    }
+    // for (int i = steps.size() - 1; i >= 0; i--) {
+    //     steps[i]->PrintState();
+    // }
     
 }
 
 void BSI::BreadthFirstSearch(Puzzle* root) {
-    /*Fronteira
-    Resolvi usar uma lista pois vou ter que iterar sobre a fronteira, e se ela fosse
-    uma queue isso não funcionaria*/
+    /*Fronteira. Resolvi usar uma lista para facilitar*/
     std::list<Puzzle*> open_list;
 
-    //Nós explorados
-    std::set<Puzzle*, decltype(closed_list_cmp)> closed_list;
+    //Nós explorados e Nós Gerados para consulta mais rápida na Hashtable
+    Hashtable closed_list, generated_nodes;
 
     //Checa se já está na solução.
     if (root->isGoal()) {
-        root->PrintState();
+        BSI::TraceSolution(root);
         return;
     }
 
-    //Coloca a raiz como o primeiro elemento da lista
+    //Coloca a raiz como o primeiro elemento da lista e adiciano a raiz aos nós gerados
     open_list.push_back(root);
+    generated_nodes.Insert(root);
 
     //Ponteiros auxiliares
     Puzzle* current_node;
     Puzzle* current_child;
 
-    //Enquanto a fronteira ainda possui algum elemento.
+    //Enquanto a fronteira ainda possui algum elemento o while irá rodar.
     while (!open_list.empty()) {
         //Pega o primeiro elemento da lista como se fosse uma fila
         current_node = open_list.front();
@@ -58,11 +57,17 @@ void BSI::BreadthFirstSearch(Puzzle* root) {
         //Remove o primeiro elemento que acabamos de pegar
         open_list.pop_front();
 
+        //Verifica se o Nó é o objetivo
+        if (current_node->isGoal()) {
+            BSI::TraceSolution(current_node);
+            return;
+        }
+
         //Expande o nó para gerar os próximos estados
         current_node->ExpandNode();
 
-        //Insere na lista fechada.
-        closed_list.insert(current_node);
+        //Insere na Hashtable que representa a lista fechada.
+        closed_list.Insert(current_node);
 
         for (unsigned i = 0; i < current_node->m_Childrens.size(); i++) {
             current_child = current_node->m_Childrens[i];
@@ -73,16 +78,13 @@ void BSI::BreadthFirstSearch(Puzzle* root) {
                 return;
             }
 
-            /*is_in_closed_list é um ponteiro para o elemento se ele está no set,
-            ou é um ponteiro para list.end() se ele não está no set*/
-            auto is_in_closed_list = closed_list.find(current_child);
-
-            //Booleano para verificar se o elemento está na lista aberta
-            bool is_in_open_list = BSI::Contains(open_list, current_child);
-
-            //Se ele não estiver na lista aberta e não estiver na lista fechada, adiciona na fronteira
-            if ((!is_in_open_list) && (is_in_closed_list == closed_list.end())) {
-                open_list.push_back(current_child);
+            /*Se o filho não estiver na lista fechada e nem foi gerado ainda, eu
+            adiciono ele na lista aberta*/
+            if (closed_list.Find(current_child) == nullptr) {
+                if (generated_nodes.Find(current_child) == nullptr) {
+                    open_list.push_back(current_child);
+                    generated_nodes.Insert(current_child);
+                }
             }
 
         }
@@ -90,11 +92,11 @@ void BSI::BreadthFirstSearch(Puzzle* root) {
 }
 
 Puzzle* BSI::DepthLimitedSearch(Puzzle* root, const int& limit) {
-    /*Agora eu uso uma lista como se fosse uma pilha para representar a fronteira.
-    Estou usando uma lista para poder iterar sobre ela*/
+    /*Agora eu uso uma lista como se fosse uma pilha para representar a fronteira.*/
     std::list<Puzzle*> open_list;
 
-    open_list.push_back(root);
+    open_list.push_back(root); //Add raiz na fronteira
+ 
     Puzzle* current_node;
     Puzzle* current_child;
 
@@ -111,16 +113,20 @@ Puzzle* BSI::DepthLimitedSearch(Puzzle* root, const int& limit) {
         Caso contrário apenas passa para a próxima iteração*/
         else if (current_node->Depth() < limit)  {
             current_node->ExpandNode();
+
             for (unsigned i = 0; i < current_node->m_Childrens.size(); i++) {
                 current_child = current_node->m_Childrens[i];
+
                 if (current_child->isGoal()) { //Early Goal Test
                     return current_child;
                 }
-                else if (!BSI::Contains(open_list, current_child)) {
+
+                else if (BSI::FindNodeInList(open_list, current_child) == nullptr) {
                     open_list.push_back(current_child);
                 }
             }
         }
+
     }
     //Não achou resposta
     return nullptr;
@@ -147,28 +153,58 @@ void BSI::IterativeDepeningSearch(Puzzle* root) {
 }
 
 void BSI::UniformCostSearch(Puzzle* root) {
-    std::list<Puzzle*> open_list;
-    std::set<Puzzle*, decltype(closed_list_cmp)> closed_list;
+
+    /*Comparador personalizado para a fila de prioridade mínima*/
+    auto queue_cmp = [](Puzzle* a, Puzzle* b) {
+        return a->m_Cost > b->m_Cost;
+    };
+
+    //Fronteira
+    std::priority_queue<Puzzle*, std::vector<Puzzle*>, decltype(queue_cmp)> open_list;
+    
+    //Hashtable para guardar os nós gerados e expandidos
+    Hashtable closed_list, generated_nodes;
 
     Puzzle* current_node;
     Puzzle* current_child;
-    open_list.push_back(root);
+
+    //Custo da raiz é ZERO
+    root->m_Cost = root->Depth();
+    open_list.push(root);
+    generated_nodes.Insert(root);
 
     while (!open_list.empty()) {
-        current_node = open_list.front();
-        open_list.pop_front();
+        current_node = open_list.top();
+        open_list.pop();
+
 
         if (current_node->isGoal()) {
             BSI::TraceSolution(current_node);
             return;
         }
         current_node->ExpandNode();
-        closed_list.insert(current_node);
+        closed_list.Insert(current_node);
 
         for (unsigned i = 0; i < current_node->m_Childrens.size(); i++) {
+            //Pega o filho atual e calcula o custo dele.
             current_child = current_node->m_Childrens[i];
-            bool is_in_closed_list = closed_list.find(current_child) != closed_list.end(); 
+            current_child->m_Cost = current_child->Depth();
+
+            //Variáveis auxiliares que me dizem se um nó está na lista aberta ou fechada
+            Puzzle *ptr = closed_list.Find(current_child);
+            Puzzle *aux = generated_nodes.Find(current_child);
+
+            //Se não estiver na lista fechada e nem na lista aberta eu adiciono.
+            if (ptr == nullptr && aux == nullptr) {
+                open_list.push(current_child);
+                generated_nodes.Insert(current_child);
+            } 
             
+            //Se Está na lista aberta com um custo maior, atualiza o custo
+            else if (aux != nullptr && (aux->m_Cost > current_child->m_Cost)) {
+                aux->m_Cost = current_child->m_Cost;
+            }
         }
     }
-}   
+}
+

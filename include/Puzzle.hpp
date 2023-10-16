@@ -41,7 +41,8 @@ class Puzzle {
         //Último movimento executado
         Moves m_LastMove;
 
-        //Custo para chegar da raiz ao nó.
+        /*Variável que vai apenas ser inicializada quando for usar algum algoritmo
+        que usa alguma função de custo, como o de Dijkstra, AStar ou Greedy*/
         int m_Cost;
 
         //---------------- Métodos Privados ----------------------//
@@ -62,7 +63,8 @@ class Puzzle {
         bool isMovementValid(const Moves& movement);
 
         //Função que vai efetivamente fazer o movimento do ZERO no vetor e criar o filho.
-        void DoMovement(const Moves& movement);
+        //Retorna um ponteiro para o filho se criado com sucesso e nullptr caso contrário
+        Puzzle* DoMovement(const Moves& movement);
 
 
     public:
@@ -74,6 +76,7 @@ class Puzzle {
          * @param last_move Último movimento executado para chegar ao estado atual. A raiz tem como último movimento o NONE, que é representado pelo zero.
         */
         Puzzle(const int values[], const Moves& last_move);
+        Puzzle(const std::vector<int>& values, const Moves& last_move);
 
         /**
          * @brief Destrutor da classe que usa a função auxiliar ClearRecursive
@@ -100,15 +103,21 @@ class Puzzle {
         bool isSameState(Puzzle* node);
 
         /*Função que retorna a profundidade que o nó se encontra na árvore.
-        Vou usar essa função no algoritmo IDS*/
+        Vou usar essa função no algoritmo IDS, no de Dijkstra e no A* */
         int Depth();
 
-        /*Calcula o custo do caminho da raiz até o nó. Ele faz a soma do 'n'primeiros
-        números da raiz até esse nó em questão*/
-        int CalculateCost();
+        /*Calcula a primeira heurística. Ela será o custo de Manhattan, ou seja, 
+        a soma total de quantos movimentos cada elemento tem que fazer para atingir
+        a posição correta*/
+        int CalculateManhattanCost();
 
-        //Permissão para os algoritmos de busca sem informação acessar os membros privados
+        /*Calcula quantos elementos estão no lugar errado no 8-puzzle. Essa vai ser a
+        segunda heurística, usada no Greedy Search*/
+        int CalculateMisplacedTiles();
+
+        //Permissão para os algoritmos de busca  acessar os membros privados
         friend class BSI;
+        friend class BCI;
 };
 
 #endif // !PUZZLE_H
